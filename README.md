@@ -1,4 +1,4 @@
-# block
+# block-f
 
 Prevent accidental edits. Uses **kernel-level immutable bit** (`chattr +i`) — unbypassable protection that even root can't defeat without removing the bit first.
 
