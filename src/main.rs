@@ -1,4 +1,3 @@
-
 use clap::Parser;
 use colored::*;
 use glob::Pattern;

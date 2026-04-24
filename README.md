@@ -1,18 +1,30 @@
 # block
 
-Prevent accidental edits. Watch files, block writes, restore on exit.
+Prevent accidental edits. Uses **kernel-level immutable bit** (`chattr +i`) — unbypassable protection that even root can't defeat without removing the bit first.
+
+> [!CAUTION]
+> **Never block system paths** like `/`, `/usr`, `/bin`, `/etc`.
+>
+> Blocking `/` would make your entire system unchangeable and require a live USB to recover. Always test with a specific project directory first.
 
 ## Usage
 
+> [!IMPORTANT]
+> **Requires root.** The immutable bit can only be set by root:
+> ```bash
+> sudo ./block
+> ```
+
 ```bash
 # Start protecting files listed in config.toml
-./block
+sudo ./block
 
 # Use custom config
-./block -c protect.toml
+sudo ./block -c protect.toml
 ```
 
-Press `Ctrl+C` to stop. All permissions restored automatically.
+> [!NOTE]
+> Press `Ctrl+C` to stop. All files restored automatically.
 
 ## Configuration
 
@@ -27,35 +39,21 @@ files = [
 ]
 ```
 
-- Files become read-only (444)
-- Directories stay accessible (555) — readable, traversable, but protected
-
 ## How it Works
 
-Uses **kernel-level immutable bit** (`chattr +i`) — files become completely unchangeable, even to root (without removing the bit first).
-
 1. **Startup** — sets immutable bit on all blocked paths
-2. **Runtime** — detects and blocks symlink attacks, re-applies protection if bypassed
-3. **Shutdown** — removes immutable bit, restores normal access
+2. **Runtime** — detects and blocks symlink attacks, re-applies protection if bypassed  
+3. **Shutdown** — removes immutable bit, restores full access
 
-### Bypass Protection
+### Attack Prevention
 
-The immutable bit prevents all these attacks:
-- ❌ `chmod +w && echo … > file` — blocked at kernel level
-- ❌ Write temp + `mv` — immutable files cannot be replaced
-- ❌ Symlink swap — detected and removed immediately
-- ❌ Even root cannot modify without removing the bit first
-
-> [!IMPORTANT]
-> **Requires root privileges.** The immutable bit can only be set by root (or with `CAP_LINUX_IMMUTABLE`). Run with `sudo`:
-> ```bash
-> sudo ./block
-> ```
-
-> [!CAUTION]
-> **Never block system paths** like `/`, `/usr`, `/bin`, `/etc`.
->
-> This app recursively modifies permissions. Blocking `/` would make your entire system unchangeable and require a live USB to recover. Always test with a specific project directory first.
+The immutable bit blocks **all** bypass attempts:
+- ❌ `chmod +w && write` — kernel blocks at lowest level
+- ❌ Write temp + `mv` — cannot replace immutable files
+- ❌ Symlink attacks — detected and removed instantly
+- ❌ Hardlink bypasses — blocked by kernel
+- ❌ Root without `CAP_LINUX_IMMUTABLE` — blocked
+- ❌ Even `chattr -i` fails without root
 
 ## Build
 
