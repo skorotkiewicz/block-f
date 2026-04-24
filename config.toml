@@ -1,0 +1,7 @@
+[blocked]
+files = [
+    "README.md",
+    "Cargo.lock",
+    "src/",
+    "test.md"
+]
