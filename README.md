@@ -1,26 +1,26 @@
 # block-f
 
-Prevent accidental edits. Uses **kernel-level immutable bit** (`chattr +i`) — unbypassable protection that even root can't defeat without removing the bit first.
+Prevent accidental edits. Works **with or without root**:
+
+- **As root**: Uses kernel-level immutable bit (`chattr +i`) — unbypassable protection
+- **As regular user**: Uses read-only permissions — blocks most edits, race-condition vulnerable
 
 > [!CAUTION]
 > **Never block system paths** like `/`, `/usr`, `/bin`, `/etc`.
 >
-> Blocking `/` would make your entire system unchangeable and require a live USB to recover. Always test with a specific project directory first.
+> Blocking `/` as root would make your entire system unchangeable. Always test with a specific project directory first.
 
 ## Usage
 
-> [!IMPORTANT]
-> **Requires root.** The immutable bit can only be set by root:
-> ```bash
-> sudo ./block
-> ```
-
 ```bash
-# Start protecting files listed in config.toml
-sudo ./block
+# Run as user (read-only mode) - basic protection
+./block-f
+
+# Run as root (immutable mode) - strongest protection
+sudo ./block-f
 
 # Use custom config
-sudo ./block -c protect.toml
+./block-f -c protect.toml
 ```
 
 > [!NOTE]
@@ -39,21 +39,25 @@ files = [
 ]
 ```
 
-## How it Works
+## Protection Modes
 
-1. **Startup** — sets immutable bit on all blocked paths
-2. **Runtime** — detects and blocks symlink attacks, re-applies protection if bypassed  
-3. **Shutdown** — removes immutable bit, restores full access
+### Root Mode (Immutable Bit)
+Uses `chattr +i` — kernel-level protection that blocks:
+- All writes (even by root)
+- File deletion and renaming
+- Permission changes
+- Symlink/hardlink attacks
+- Atomic replacement attacks
 
-### Attack Prevention
+**Recovery**: Only root can remove the immutable bit.
 
-The immutable bit blocks **all** bypass attempts:
-- ❌ `chmod +w && write` — kernel blocks at lowest level
-- ❌ Write temp + `mv` — cannot replace immutable files
-- ❌ Symlink attacks — detected and removed instantly
-- ❌ Hardlink bypasses — blocked by kernel
-- ❌ Root without `CAP_LINUX_IMMUTABLE` — blocked
-- ❌ Even `chattr -i` fails without root
+### User Mode (Read-Only)
+Uses `chmod 444/555` — user-level protection that:
+- Sets files read-only
+- Allows reading and directory traversal
+- **Vulnerable** to: race conditions, temp+move, symlink swaps
+
+**Recovery**: Original permissions restored on exit.
 
 ## Build
 
@@ -61,7 +65,7 @@ The immutable bit blocks **all** bypass attempts:
 cargo build --release
 ```
 
-Binary at `target/release/block`.
+Binary at `target/release/block-f`.
 
 ## License
 

@@ -12,5 +12,3 @@ Now the protection is released and the file is writable again.
 - Symlink attacks
 - Hardlink bypasses
 - Even root couldn't modify without removing the immutable bit first
-
-**Perfect protection for multi-agent workflows!** 🤖🛡️

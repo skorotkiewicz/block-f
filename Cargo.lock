@@ -39,6 +39,7 @@ dependencies = [
  "colored",
  "ctrlc",
  "glob",
+ "libc",
  "notify",
  "serde",
  "toml",
